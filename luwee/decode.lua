@@ -28,13 +28,18 @@ local decoders = {
 	htb = nil,
 }
 
-local function read_object(iter)
-	local type = iter:next()..iter:next()..iter:next()
+local function get_decoder(type)
 	local decoder = decoders[type]
 	if not decoder then
 		error(("Unknown type %q"):format(type))
 	end
-	return decoder(iter)
+	return decoder
+end
+
+
+local function read_object(iter)
+	local type = iter:next()..iter:next()..iter:next()
+	return get_decoder(type)(iter)
 end
 
 local function read_hdata_value(iter, pointer_count, keys)
@@ -44,8 +49,7 @@ local function read_hdata_value(iter, pointer_count, keys)
 		data.p_path[#data.p_path] = decoders.ptr(iter)
 	end
 	for _,ktp in ipairs(keys) do
-		--TODO check decoder exists
-		data[ktp.key] = decoders[ktp.type](iter)
+		data[ktp.key] = get_decoder(ktp.type)(iter)
 	end
 	return obj.new("hdata_value", data)
 end
@@ -106,12 +110,11 @@ function decoders.tim(iter)
 end
 
 function decoders.arr(iter)
-	--TODO check decoder exists
 	local type = iter:next()..iter:next()..iter:next()
 	local count = decoders.int(iter).value
 	local values = {}
 	for i=1, count do
-		values[i] = decoders[type](iter)
+		values[i] = get_decoder(type)(iter)
 	end
 	return obj.new("arr", {values = values})
 end
