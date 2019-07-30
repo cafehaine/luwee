@@ -108,9 +108,13 @@ function decoders.inf(iter)
 end
 
 function decoders.int(iter)
-	--TODO handle signed values
+	--TODO Probably could do better
 	local val_bytes = iter:next()..iter:next()..iter:next()..iter:next()
 	local value = m.length(val_bytes)
+	if value & 0x80000000 > 0 then
+		-- signed integer
+		value = - (0xffffffff - value + 1)
+	end
 	return obj.new("int", {value = value})
 end
 
