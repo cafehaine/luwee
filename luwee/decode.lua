@@ -41,13 +41,13 @@ local function read_object(iter)
 end
 
 function decoders.lon(iter)
-	--TODO handle signed values
 	local len = iter:next():byte()
-	local output = 0
+	local output = {}
 	for i=1, len do
-		output = output * 256 + iter:next():byte()
+		output[i] = iter:next()
 	end
-	return obj.new("lon", {value = output})
+	local value = tonumber(table.concat(output))
+	return obj.new("lon", {value = value})
 end
 
 function decoders.chr(iter)
