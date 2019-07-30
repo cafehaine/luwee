@@ -25,10 +25,7 @@ end
 -- All the types from the spec
 -- https://weechat.org/files/doc/stable/weechat_relay_protocol.en.html#objects
 local decoders = {
-	tim = nil,
 	htb = nil,
-	hda = nil,
-	arr = nil,
 }
 
 local function read_object(iter)
@@ -38,6 +35,41 @@ local function read_object(iter)
 		error(("Unknown type %q"):format(type))
 	end
 	return decoder(iter)
+end
+
+local function read_hdata_value(iter, pointer_count, keys)
+	data = {}
+	data.p_path={}
+	for i=1, pointer_count do
+		data.p_path[#data.p_path] = decoders.ptr(iter)
+	end
+	for _,ktp in ipairs(keys) do
+		--TODO check decoder exists
+		data[ktp.key] = decoders[ktp.type](iter)
+	end
+	return obj.new("hdata_value", data)
+end
+
+function decoders.hda(iter)
+	local h_path = decoders.str(iter).content
+	local pointer_count = 1
+	for _ in h_path:gmatch("/") do
+		pointer_count = pointer_count + 1
+	end
+	print(h_path, pointer_count)
+	local keys_raw = decoders.str(iter).content
+	local keys = {}
+	for ktp in keys_raw:gmatch("[^,:]*:[^,:]*") do
+		local key, type = ktp:match("(.*):(.*)")
+		print(key,type)
+		keys[#keys+1] = {key=key, type=type}
+	end
+	local count = decoders.int(iter).value
+	local items = {}
+	for i=1, count do
+		items[i] = read_hdata_value(iter, pointer_count, keys)
+	end
+	return obj.new("hda", {h_path=h_path, keys_raw=keys_raw, count=count, items=items})
 end
 
 function decoders.lon(iter)
