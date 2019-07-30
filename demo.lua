@@ -23,8 +23,12 @@ local function done_setup(button)
 		fltk.message("Please enter an address.")
 		return
 	end
-	setup_win:hide()
-	luwee.connect(addr, setup_port_input:value(), setup_ssl_button:value(), setup_pass_input:value())
+	local success, err = pcall(luwee.connect, addr, setup_port_input:value(), setup_ssl_button:value(), setup_pass_input:value())
+	if not success then
+		fltk.alert(err)
+	else
+		setup_win:hide()
+	end
 end
 
 -----------------
