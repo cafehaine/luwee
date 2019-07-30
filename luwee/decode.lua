@@ -22,11 +22,7 @@ end
 -- Decoders --
 --------------
 
--- All the types from the spec
--- https://weechat.org/files/doc/stable/weechat_relay_protocol.en.html#objects
-local decoders = {
-	htb = nil,
-}
+local decoders = {}
 
 local function get_decoder(type)
 	local decoder = decoders[type]
@@ -35,7 +31,6 @@ local function get_decoder(type)
 	end
 	return decoder
 end
-
 
 local function read_object(iter)
 	local type = iter:next()..iter:next()..iter:next()
@@ -77,6 +72,23 @@ function decoders.hda(iter)
 		items[i] = read_hdata_value(iter, pointer_count, keys)
 	end
 	return obj.new("hda", {h_path=h_path, keys_raw=keys_raw, count=count, items=items})
+end
+
+function read_hashtb_element(iter, type_k, type_v)
+	local key = get_decoder(type_k)(iter)
+	local value = get_decoder(type_v)(iter)
+	return obj.new("hashtb_element", {key=key, value=value})
+end
+
+function decoders.htb(iter)
+	local type_keys = iter:next()..iter:next()..iter:next()
+	local type_values = iter:next()..iter:next()..iter:next()
+	local count = decoders.int(iter).value
+	local elements = {}
+	for i=1, count do
+		elements[i] = read_hashtb_element(iter, type_keys, type_values)
+	end
+	return obj.new("htb", elements)
 end
 
 function decoders.lon(iter)

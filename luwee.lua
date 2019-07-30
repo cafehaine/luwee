@@ -20,6 +20,8 @@ function m.connect(server_address, server_port, server_ssl, server_password)
 	--TODO find a way to ask the user if they trust the certificate
 	conn:dohandshake()
 	conn:send(("init password=%s,compression=off\n"):format(server_password))
+	conn:send("hdata buffer:gui_buffers(*) short_name,name,number\nsync\n")
+	m.check_input()
 	connection = conn
 end
 
@@ -34,7 +36,7 @@ function m.check_input()
 	end
 	local len = decode.length(len_bytes) - 4
 	connection:settimeout(nil)
-	local answer = conn:receive(len)
+	local answer = connection:receive(len)
 	decode.message(answer)
 end
 
