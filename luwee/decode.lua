@@ -52,17 +52,20 @@ end
 
 function decoders.hda(iter)
 	local h_path = decoders.str(iter).content
-	local pointer_count = 1
-	for _ in h_path:gmatch("/") do
-		pointer_count = pointer_count + 1
+	local pointer_count = 0
+	if h_path ~= nil then
+		pointer_count = 1
+		for _ in h_path:gmatch("/") do
+			pointer_count = pointer_count + 1
+		end
 	end
-	print(h_path, pointer_count)
 	local keys_raw = decoders.str(iter).content
 	local keys = {}
-	for ktp in keys_raw:gmatch("[^,:]*:[^,:]*") do
-		local key, type = ktp:match("(.*):(.*)")
-		print(key,type)
-		keys[#keys+1] = {key=key, type=type}
+	if keys_raw ~= nil then
+		for ktp in keys_raw:gmatch("[^,:]*:[^,:]*") do
+			local key, type = ktp:match("(.*):(.*)")
+			keys[#keys+1] = {key=key, type=type}
+		end
 	end
 	local count = decoders.int(iter).value
 	local items = {}
