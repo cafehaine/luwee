@@ -1,5 +1,15 @@
 local fltk = require("moonfltk")
+local timer = require("moonfltk.timer")
 local luwee = require("luwee")
+
+function timer_callback(tid)
+	luwee.check_input()
+	timer.start(tid)
+end
+
+timer.init()
+tid = timer.create(0.5, timer_callback)
+timer.start(tid)
 
 local main_window, setup_win, setup_addr_input, setup_port_input, setup_ssl_button, setup_pass_input
 
@@ -14,11 +24,7 @@ local function done_setup(button)
 		return
 	end
 	setup_win:hide()
-	print(setup_addr_input:value())
-	print(setup_port_input:value())
-	print(setup_ssl_button:value())
-	print(setup_pass_input:value())
-	print("done")
+	luwee.connect(addr, setup_port_input:value(), setup_ssl_button:value(), setup_pass_input:value())
 end
 
 -----------------
@@ -33,7 +39,6 @@ main_channel_tree:callback(tree_callback)
 main_channel_tree:done()
 
 main_buffer_display = fltk.text_display(160, 10, 470, 420)
-main_buffer_display:buffer():append("Test")
 
 main_buffer_input = fltk.input(160, 440, 470, 30)
 
