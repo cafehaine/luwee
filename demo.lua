@@ -34,6 +34,8 @@ local function add_buffer(buffer)
 end
 
 local function new_line(line)
+	print(("%q"):format(line.prefix))
+	print(("%q"):format(line.message))
 	local buffer = pointer_to_name[line.buffer]
 	text_buffers[buffer]:append(line.prefix.."|"..line.message.."\n")
 end
