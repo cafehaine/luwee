@@ -28,7 +28,14 @@ local function add_buffer(buffer)
 	windows.main.channel_browser:add(buffer.full_name)
 end
 
+local function new_line(line)
+	for k,v in pairs(line) do
+		print(k,v)
+	end
+end
+
 luwee.register_callback("buffer_added", add_buffer)
+luwee.register_callback("new_line", new_line)
 
 local function browser_callback(browser)
 	set_current_buffer(browser:text(browser:value()))

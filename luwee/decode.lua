@@ -63,7 +63,6 @@ function decoders.hda(iter)
 	if keys_raw ~= nil then
 		for ktp in keys_raw:gmatch("[^,:]*:[^,:]*") do
 			local key, type = ktp:match("(.*):(.*)")
-			print(key,type)
 			keys[#keys+1] = {key=key, type=type}
 		end
 	end
@@ -111,7 +110,7 @@ end
 
 function decoders.ptr(iter)
 	local len = iter:next():byte()
-	local bytes = {}
+	local bytes = {"0x"}
 	for i=1, len do
 		bytes[#bytes+1] = iter:next()
 	end
@@ -119,8 +118,12 @@ function decoders.ptr(iter)
 end
 
 function decoders.tim(iter)
-	local output = decoders.ptr(iter)
-	return output
+	local len = iter:next():byte()
+	local bytes = {}
+	for i=1, len do
+		bytes[#bytes+1] = iter:next()
+	end
+	return table.concat(bytes)
 end
 
 function decoders.arr(iter)

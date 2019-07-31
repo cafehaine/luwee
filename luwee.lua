@@ -7,7 +7,7 @@ local decode = require("luwee.decode")
 
 local connection = nil
 
-local callback_names = {"buffer_added"}
+local callback_names = {"buffer_added", "new_line"}
 local callbacks = {}
 
 function m.register_callback(name, callback)
@@ -55,13 +55,19 @@ function m.connect(server_address, server_port, server_ssl, server_password)
 	connection = conn
 end
 
+local function call_callbacks(name, ...)
+	for _, callback in ipairs(callbacks[name]) do
+		callback(...)
+	end
+end
+
 local function handle_message(message)
 	if message.id == "luwee_init" then
 		for _,v in ipairs(message.objects[1]) do
-			for _,callback in ipairs(callbacks["buffer_added"]) do
-				callback(v)
-			end
+			call_callbacks("buffer_added", v)
 		end
+	elseif message.id == "_buffer_line_added" then
+		call_callbacks("new_line", message.objects[1][1])
 	else
 		print("TODO lel")
 	end
