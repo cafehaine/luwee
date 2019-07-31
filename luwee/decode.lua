@@ -75,22 +75,21 @@ function decoders.hda(iter)
 end
 
 function read_hashtb_element(iter, type_k, type_v)
-	error("REDO THIS")
 	local key = get_decoder(type_k)(iter)
 	local value = get_decoder(type_v)(iter)
-	return obj.new("hashtb_element", {key=key, value=value})
+	return key, value
 end
 
 function decoders.htb(iter)
-	error("REDO THIS")
 	local type_keys = iter:next()..iter:next()..iter:next()
 	local type_values = iter:next()..iter:next()..iter:next()
-	local count = decoders.int(iter).value
-	local elements = {}
+	local count = decoders.int(iter)
+	local output = {__type="htb"}
 	for i=1, count do
-		elements[i] = read_hashtb_element(iter, type_keys, type_values)
+		local key, value = read_hashtb_element(iter, type_keys, type_values)
+		output[key] = value
 	end
-	return obj.new("htb", elements)
+	return output
 end
 
 function decoders.lon(iter)
