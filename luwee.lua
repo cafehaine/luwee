@@ -73,20 +73,31 @@ local function handle_message(message)
 	end
 end
 
-function m.check_input()
-	if connection == nil then return end
+local function try_read_message()
 	connection:settimeout(0.1)
 	local len_bytes, err = connection:receive(4)
 	if not len_bytes and err == "closed" then
-		error("connection closed")
+		return "closed"
 	elseif not len_bytes then
-		return -- timeout
+		return "timeout"
 	end
 	local len = decode.length(len_bytes) - 4
 	connection:settimeout(nil)
 	local answer = connection:receive(len)
 	message = decode.message(answer)
 	handle_message(message)
+	return "success"
+end
+
+function m.check_input()
+	if connection == nil then return end
+	output = try_read_message()
+	while output == "success" do
+		output = try_read_message()
+	end
+	if output == "closed" then
+		error("Connection closed.")
+	end
 end
 
 return m

@@ -14,24 +14,28 @@ timer.start(tid)
 local windows = {}
 
 local current_buffer = nil
+local text_buffers = {}
+local pointer_to_name = {}
 
 local function set_current_buffer(full_name)
 	if full_name == nil then return end
 	windows.main.buffer_label:label(full_name)
+	windows.main.buffer_display:buffer(text_buffers[full_name])
 	current_buffer = full_name
 end
 
 local function add_buffer(buffer)
+	pointer_to_name[buffer.__p_path[1]] = buffer.full_name
+	text_buffers[buffer.full_name] = fltk.text_buffer()
+	windows.main.channel_browser:add(buffer.full_name)
 	if current_buffer == nil then
 		set_current_buffer(buffer.full_name)
 	end
-	windows.main.channel_browser:add(buffer.full_name)
 end
 
 local function new_line(line)
-	for k,v in pairs(line) do
-		print(k,v)
-	end
+	local buffer = pointer_to_name[line.buffer]
+	text_buffers[buffer]:append(line.prefix.."|"..line.message.."\n")
 end
 
 luwee.register_callback("buffer_added", add_buffer)
