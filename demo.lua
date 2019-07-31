@@ -13,6 +13,12 @@ timer.start(tid)
 
 local windows = {}
 
+local function add_buffer(buffer)
+	windows.main.channel_browser:add(buffer.short_name or buffer.name or buffer.long_name)
+end
+
+luwee.register_callback("buffer_added", add_buffer)
+
 local function tree_callback(tree, pathname, reason)
 	print(tree, pathname, reason)
 end
@@ -40,10 +46,9 @@ windows.main = {}
 local win = windows.main
 win._ = fltk.double_window(640, 480, "Luwee demo")
 
-win.channel_tree = fltk.tree(10, 10, 140, 460)
-win.channel_tree:showroot(false)
-win.channel_tree:callback(tree_callback)
-win.channel_tree:done()
+win.channel_browser = fltk.select_browser(10, 10, 140, 460)
+win.channel_browser:callback(tree_callback)
+win.channel_browser:done()
 
 win.buffer_display = fltk.text_display(160, 10, 470, 420)
 
