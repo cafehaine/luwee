@@ -39,18 +39,18 @@ end
 
 local function read_hdata_value(iter, pointer_count, keys)
 	data = {}
-	data.p_path={}
+	data.__p_path={}
 	for i=1, pointer_count do
-		data.p_path[#data.p_path] = decoders.ptr(iter)
+		data.__p_path[#data.__p_path+1] = decoders.ptr(iter)
 	end
 	for _,ktp in ipairs(keys) do
 		data[ktp.key] = get_decoder(ktp.type)(iter)
 	end
-	return obj.new("hdata_value", data)
+	return data
 end
 
 function decoders.hda(iter)
-	local h_path = decoders.str(iter).content
+	local h_path = decoders.str(iter)
 	local pointer_count = 0
 	if h_path ~= nil then
 		pointer_count = 1
@@ -58,29 +58,32 @@ function decoders.hda(iter)
 			pointer_count = pointer_count + 1
 		end
 	end
-	local keys_raw = decoders.str(iter).content
+	local keys_raw = decoders.str(iter)
 	local keys = {}
 	if keys_raw ~= nil then
 		for ktp in keys_raw:gmatch("[^,:]*:[^,:]*") do
 			local key, type = ktp:match("(.*):(.*)")
+			print(key,type)
 			keys[#keys+1] = {key=key, type=type}
 		end
 	end
-	local count = decoders.int(iter).value
-	local items = {}
+	local count = decoders.int(iter)
+	local output = {__type="hda", h_path = h_path}
 	for i=1, count do
-		items[i] = read_hdata_value(iter, pointer_count, keys)
+		output[i] = read_hdata_value(iter, pointer_count, keys)
 	end
-	return obj.new("hda", {h_path=h_path, keys_raw=keys_raw, count=count, items=items})
+	return output
 end
 
 function read_hashtb_element(iter, type_k, type_v)
+	error("REDO THIS")
 	local key = get_decoder(type_k)(iter)
 	local value = get_decoder(type_v)(iter)
 	return obj.new("hashtb_element", {key=key, value=value})
 end
 
 function decoders.htb(iter)
+	error("REDO THIS")
 	local type_keys = iter:next()..iter:next()..iter:next()
 	local type_values = iter:next()..iter:next()..iter:next()
 	local count = decoders.int(iter).value
@@ -98,12 +101,12 @@ function decoders.lon(iter)
 		output[i] = iter:next()
 	end
 	local value = tonumber(table.concat(output))
-	return obj.new("lon", {value = value})
+	return value
 end
 
 function decoders.chr(iter)
 	local value = iter:next()
-	return obj.new("chr", {value = value})
+	return value
 end
 
 function decoders.ptr(iter)
@@ -112,12 +115,11 @@ function decoders.ptr(iter)
 	for i=1, len do
 		bytes[#bytes+1] = iter:next()
 	end
-	return obj.new("ptr", {value=table.concat(bytes)})
+	return table.concat(bytes)
 end
 
 function decoders.tim(iter)
 	local output = decoders.ptr(iter)
-	output.__type = "tim"
 	return output
 end
 
@@ -128,33 +130,31 @@ function decoders.arr(iter)
 	for i=1, count do
 		values[i] = get_decoder(type)(iter)
 	end
-	return obj.new("arr", {values = values})
+	return values
 end
 
 function decoders.str(iter)
 	local len_bytes = iter:next()..iter:next()..iter:next()..iter:next()
 	if len_bytes == "\255\255\255\255" then
 		-- null string
-		return obj.new("str", {length=0})
+		return nil
 	end
 	local length = m.length(len_bytes)
 	local output = {}
 	for i=1, length do
 		output[#output+1] = iter:next()
 	end
-	return obj.new("str", {length=length,content=table.concat(output)})
+	return table.concat(output)
 end
 
 function decoders.buf(iter)
-	local output = decoders.str(iter)
-	output.__type = "buf"
-	return output
+	return decoders.str(iter)
 end
 
 function decoders.inf(iter)
-	local name = decoders.str(iter).content
-	local value = decoders.str(iter).content
-	return obj.new("inf", {name = name, value = value})
+	local name = decoders.str(iter)
+	local value = decoders.str(iter)
+	return {name = name, value = value}
 end
 
 function decoders.int(iter)
@@ -165,7 +165,7 @@ function decoders.int(iter)
 		-- signed integer
 		value = - (0xffffffff - value + 1)
 	end
-	return obj.new("int", {value = value})
+	return value
 end
 
 local function read_variable(iter)
@@ -184,13 +184,13 @@ local function read_item(iter)
 end
 
 function decoders.inl(iter)
-	local name = decoders.str(iter).content
-	local count = decoders.int(iter).value
-	local items = {}
+	local name = decoders.str(iter)
+	local count = decoders.int(iter)
+	local items = {name=name, __type="inl"}
 	for i=1, count do
 		items[i] = read_item(iter)
 	end
-	return obj.new("inl", {name = name, count = count, items = items})
+	return items
 end
 
 ----------------------
@@ -212,14 +212,14 @@ function m.message(message)
 		error("Compression isn't handled.")
 	end
 	local id = decoders.str(iter)
-	print("id:")
-	pprint(id, true)
+	print("id:", id)
 	local objects = {}
 	while iter:peek() ~= nil do
 		objects[#objects+1] = read_object(iter)
 	end
 	print("objects:")
 	pprint(objects, true)
+	return {id=id, objects=objects}
 end
 
 return m
