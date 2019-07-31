@@ -13,14 +13,24 @@ timer.start(tid)
 
 local windows = {}
 
+local current_buffer = nil
+
+local function set_current_buffer(full_name)
+	windows.main.buffer_label:label(full_name)
+	current_buffer = full_name
+end
+
 local function add_buffer(buffer)
-	windows.main.channel_browser:add(buffer.short_name or buffer.name or buffer.long_name)
+	if current_buffer == nil then
+		set_current_buffer(buffer.full_name)
+	end
+	windows.main.channel_browser:add(buffer.full_name)
 end
 
 luwee.register_callback("buffer_added", add_buffer)
 
-local function tree_callback(tree, pathname, reason)
-	print(tree, pathname, reason)
+local function browser_callback(browser)
+	set_current_buffer(browser:text(browser:value()))
 end
 
 local function done_setup(button)
@@ -47,10 +57,12 @@ local win = windows.main
 win._ = fltk.double_window(640, 480, "Luwee demo")
 
 win.channel_browser = fltk.select_browser(10, 10, 140, 460)
-win.channel_browser:callback(tree_callback)
+win.channel_browser:callback(browser_callback)
 win.channel_browser:done()
 
-win.buffer_display = fltk.text_display(160, 10, 470, 420)
+win.buffer_label = fltk.box(160, 10, 470, 30, "NO BUFFER SELECTED")
+
+win.buffer_display = fltk.text_display(160, 40, 470, 420)
 
 win.buffer_input = fltk.input(160, 440, 470, 30)
 

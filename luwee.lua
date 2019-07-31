@@ -64,7 +64,6 @@ function m.check_input()
 	if not len_bytes and err == "closed" then
 		error("connection closed")
 	elseif not len_bytes then
-		print(err)
 		return -- timeout
 	end
 	local len = decode.length(len_bytes) - 4
