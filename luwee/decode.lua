@@ -125,7 +125,7 @@ end
 
 function decoders.arr(iter)
 	local type = iter:next()..iter:next()..iter:next()
-	local count = decoders.int(iter).value
+	local count = decoders.int(iter)
 	local values = {}
 	for i=1, count do
 		values[i] = get_decoder(type)(iter)

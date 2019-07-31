@@ -16,6 +16,7 @@ local windows = {}
 local current_buffer = nil
 
 local function set_current_buffer(full_name)
+	if full_name == nil then return end
 	windows.main.buffer_label:label(full_name)
 	current_buffer = full_name
 end
@@ -31,6 +32,13 @@ luwee.register_callback("buffer_added", add_buffer)
 
 local function browser_callback(browser)
 	set_current_buffer(browser:text(browser:value()))
+end
+
+local function input_callback(input)
+	if current_buffer ~= nil then
+		luwee.send(current_buffer, input:value())
+	end
+	input:value("")
 end
 
 local function done_setup(button)
@@ -62,9 +70,11 @@ win.channel_browser:done()
 
 win.buffer_label = fltk.box(160, 10, 470, 30, "NO BUFFER SELECTED")
 
-win.buffer_display = fltk.text_display(160, 40, 470, 420)
+win.buffer_display = fltk.text_display(160, 40, 470, 390)
 
 win.buffer_input = fltk.input(160, 440, 470, 30)
+win.buffer_input:when(fltk.WHEN_ENTER_KEY)
+win.buffer_input:callback(input_callback)
 
 win._:done()
 

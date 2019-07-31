@@ -25,6 +25,16 @@ function m.register_callback(name, callback)
 	error(("Invalid callback name %q"):format(name))
 end
 
+function m.send(buffer, data)
+	if connection == nil then error("Not connected.") end
+	connection:settimeout(5)
+	local to_send = {}
+	for line in data:gmatch("([^\n]*)") do
+		to_send[#to_send+1] = ("input %s %s\n"):format(buffer, line)
+	end
+	connection:send(table.concat(to_send))
+end
+
 function m.connect(server_address, server_port, server_ssl, server_password)
 	if not server_ssl then
 		error("Only ssl is suported for now.")
