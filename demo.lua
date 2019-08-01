@@ -1,6 +1,7 @@
 local fltk = require("moonfltk")
 local timer = require("moonfltk.timer")
 local luwee = require("luwee")
+local colors = require("luwee.colors")
 
 function timer_callback(tid)
 	luwee.check_input()
@@ -33,11 +34,20 @@ local function add_buffer(buffer)
 	end
 end
 
+-- Concatenate the message, ignoring color codes
+local function concat_message(message)
+	local output = {}
+	for i,t in ipairs(message) do
+		output[i] = t.text or ""
+	end
+	return table.concat(output)
+end
+
 local function new_line(line)
-	print(("%q"):format(line.prefix))
-	print(("%q"):format(line.message))
+	local prefix = colors.decode(line.prefix)
+	local message = colors.decode(line.message)
 	local buffer = pointer_to_name[line.buffer]
-	text_buffers[buffer]:append(line.prefix.."|"..line.message.."\n")
+	text_buffers[buffer]:append(concat_message(prefix).." | "..concat_message(message).."\n")
 end
 
 luwee.register_callback("buffer_added", add_buffer)

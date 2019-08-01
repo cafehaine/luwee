@@ -5,6 +5,7 @@ local striter = require("striter")
 local CONTROL_CHARACTERS = "[\x19\x1A\x1B\x1C]"
 local ATTRIBUTES = "[%*%!%/%_%|]"
 
+--TODO check that all the colors work as expected
 local COLORS = {
 	"black", "red", "green", "brown", "blue", "magenta", "cyan", "gray",
 	"darkgray", "lightred", "lightgreen", "yellow", "lightblue",
@@ -77,7 +78,7 @@ end
 local function copy_table(tab)
 	local output = {}
 	for k,v in pairs(tab) do
-		output[k] = type(v) == "table" and copytable(v) or v
+		output[k] = type(v) == "table" and copy_table(v) or v
 	end
 	return output
 end
@@ -115,8 +116,8 @@ end
 local function decode_sequence(iter, colors, attributes)
 	--TODO factorize some code
 	local control = iter:next()
-	local new_colors = copytable(colors)
-	local new_attributes = copytable(attributes)
+	local new_colors = copy_table(colors)
+	local new_attributes = copy_table(attributes)
 
 	-- change color
 	if control == "\x19" then
@@ -189,9 +190,10 @@ function m.decode(str)
 	while iter:peek() do
 		local char = iter:peek()
 		if char:match(CONTROL_CHARACTERS) then
-			local new_block = decode_sequence(iter, colors, attributes)
+			local new_block = decode_sequence(iter, current.colors, current.attributes)
 			new_block.text = ""
 			output[#output+1] = new_block
+			current = new_block
 		else
 			current.text = current.text .. iter:next()
 		end
