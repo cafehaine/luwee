@@ -33,7 +33,7 @@ local function get_decoder(type)
 end
 
 local function read_object(iter)
-	local type = iter:next()..iter:next()..iter:next()
+	local type = iter:next(3)
 	return get_decoder(type)(iter)
 end
 
@@ -81,8 +81,8 @@ function read_hashtb_element(iter, type_k, type_v)
 end
 
 function decoders.htb(iter)
-	local type_keys = iter:next()..iter:next()..iter:next()
-	local type_values = iter:next()..iter:next()..iter:next()
+	local type_keys = iter:next(3)
+	local type_values = iter:next(3)
 	local count = decoders.int(iter)
 	local output = {__type="htb"}
 	for i=1, count do
@@ -94,10 +94,7 @@ end
 
 function decoders.lon(iter)
 	local len = iter:next():byte()
-	local output = {}
-	for i=1, len do
-		output[i] = iter:next()
-	end
+	local output = iter:next(len)
 	local value = tonumber(table.concat(output))
 	return value
 end
@@ -109,24 +106,16 @@ end
 
 function decoders.ptr(iter)
 	local len = iter:next():byte()
-	local bytes = {"0x"}
-	for i=1, len do
-		bytes[#bytes+1] = iter:next()
-	end
-	return table.concat(bytes)
+	return "0x" .. iter:next(len)
 end
 
 function decoders.tim(iter)
 	local len = iter:next():byte()
-	local bytes = {}
-	for i=1, len do
-		bytes[#bytes+1] = iter:next()
-	end
-	return table.concat(bytes)
+	return iter:next(len)
 end
 
 function decoders.arr(iter)
-	local type = iter:next()..iter:next()..iter:next()
+	local type = iter:next(3)
 	local count = decoders.int(iter)
 	local values = {}
 	for i=1, count do
@@ -136,17 +125,13 @@ function decoders.arr(iter)
 end
 
 function decoders.str(iter)
-	local len_bytes = iter:next()..iter:next()..iter:next()..iter:next()
+	local len_bytes = iter:next(4)
 	if len_bytes == "\255\255\255\255" then
 		-- null string
 		return nil
 	end
 	local length = m.length(len_bytes)
-	local output = {}
-	for i=1, length do
-		output[#output+1] = iter:next()
-	end
-	return table.concat(output)
+	return iter:next(length)
 end
 
 function decoders.buf(iter)
@@ -161,7 +146,7 @@ end
 
 function decoders.int(iter)
 	--TODO Probably could do better
-	local val_bytes = iter:next()..iter:next()..iter:next()..iter:next()
+	local val_bytes = iter:next(4)
 	local value = m.length(val_bytes)
 	if value & 0x80000000 > 0 then
 		-- signed integer

@@ -184,6 +184,9 @@ local function decode_sequence(iter, colors, attributes)
 end
 
 function m.decode(str)
+	if str == nil then
+		return ""
+	end
 	local iter = striter.new(str)
 	local current = {colors={nil, nil}, attributes={}, text=""}
 	local output = {current}
